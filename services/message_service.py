@@ -19,8 +19,8 @@ def send_message(phone: str, text: str):
     }
 
     print(text)
-    # response = requests.post(url, json=payload, headers=headers)
-    # print(response)
+    response = requests.post(url, json=payload, headers=headers)
+    print(response)
 
 def send_audio_message(phone: str, text: str):
     url = "http://localhost:8900/api/1/chat/send/audio" 
