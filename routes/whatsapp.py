@@ -125,4 +125,4 @@ async def receive_message(request: Request):
                 return handle_gpt4(body_message, chat, sender)
     else:
         print("Mensagem não contém um comando válido.")
-        return send_message(chat, "Mensagem recebida, mas não contém um comando válido.")
+        # return send_message(chat, "Mensagem recebida, mas não contém um comando válido.")
