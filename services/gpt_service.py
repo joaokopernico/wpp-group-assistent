@@ -177,7 +177,7 @@ def handle_gpt4(prompt: str, chat: str, sender: str):
             functions=tools,
             function_call="auto",  # Permite que o GPT escolha qual função chamar
             max_tokens=500,
-            temperature=2.0
+            temperature=1.2
         )
 
         message = response['choices'][0]['message']
