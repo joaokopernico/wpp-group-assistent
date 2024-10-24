@@ -4,6 +4,7 @@ from datetime import datetime
 from database import get_db_connection
 from services.message_service import send_message
 from services.event_service import cadastrar_evento_geral
+import services.elevenlabs_service as eleven
 import openai
 from config import OPENAI_API_KEY
 import sqlite3
@@ -130,6 +131,22 @@ def handle_gpt4(prompt: str, chat: str, sender: str):
                 "required": ["phone", "text"],
                 "additionalProperties": False
             }
+        },
+        {
+            "type": "function",
+            "name": "send_audio",
+            "description": "Responde com uma mensagem de audio",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "audio": {
+                        "type": "string",
+                        "description": "Conteúdo do audio a ser enviado, deve ter no maximo 200 caracteres"
+                    }
+                },
+                "required": ["audio"],
+                "additionalProperties": False
+            }
         }
     ]
     
@@ -198,6 +215,13 @@ def handle_gpt4(prompt: str, chat: str, sender: str):
                 
                 result = send_message(phone, text)
                 return result  # A função send_custom_message deve retornar uma mensagem de confirmação
+            
+            elif function_name == "send_audio":
+                
+                # Chamar a função send_custom_message com os argumentos fornecidos
+                audio = function_args.get("audio")
+                    
+                return eleven.handle_eleven_labs(audio, chat)
                 
             else:
                 print(f"Função não reconhecida: {function_name}")
