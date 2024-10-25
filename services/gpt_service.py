@@ -66,7 +66,7 @@ def handle_gpt4(prompt: str, chat: str, sender: str):
   
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT system_prompt FROM config_gpt WHERE id = 1')
+    cursor.execute('SELECT system_prompt FROM config_gpt WHERE chat = ?', (chat,))
     config_gpt = cursor.fetchone()
 
 
@@ -241,3 +241,70 @@ def handle_gpt4(prompt: str, chat: str, sender: str):
     except Exception as e:
         print(f"Erro inesperado: {e}")
         return send_message(chat, "Desculpe, ocorreu um erro inesperado.")
+    
+    
+
+def handle_change_config(config: str, chat: str):
+    # Obter a conexão com o banco de dados
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Verificar se já existe algum registro na tabela config_gpt
+        cursor.execute('SELECT * FROM config_gpt WHERE chat = ?', (chat,))
+        result = cursor.fetchone()
+
+        if result is None:
+            # Se não existe nenhum registro, cria o registro com id = 1 e system_prompt = config
+            cursor.execute('''
+                INSERT INTO config_gpt (system_prompt, chat)
+                VALUES (?, ?)
+            ''', (config, chat,))
+            print("Configuração criada com sucesso.")
+        else:
+            # Se já existe, atualiza o valor do system_prompt
+            cursor.execute('''
+                UPDATE config_gpt
+                SET system_prompt = ?
+                WHERE chat = ?
+            ''', (config, chat))
+            print("Configuração atualizada com sucesso.")
+
+        # Confirmar a transação para salvar as alterações no banco de dados
+        conn.commit()
+
+    except Exception as e:
+        # Se algo der errado, faz rollback e exibe o erro
+        conn.rollback()
+        print(f"Ocorreu um erro: {e}")
+
+    finally:
+        # Fechar o cursor e a conexão
+        cursor.close()
+        conn.close()
+
+def handle_see_config(chat: str):
+    # Obter a conexão com o banco de dados
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Verificar se já existe algum registro na tabela config_gpt
+        cursor.execute('SELECT * FROM config_gpt WHERE id = 1')
+        result = cursor.fetchone()
+
+        if result is None:
+            send_message(chat, "Nenhuma configuração encontrada.")
+        else:
+            send_message(chat, result['system_prompt'])
+
+    except Exception as e:
+        # Se algo der errado, faz rollback e exibe o erro
+        conn.rollback()
+        print(f"Ocorreu um erro: {e}")
+
+    finally:
+        # Fechar o cursor e a conexão
+        cursor.close()
+        conn.close()
+    

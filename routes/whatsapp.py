@@ -13,11 +13,9 @@ from services.event_service import (
     handle_confirmar,
     handle_desconfirmar,
     handle_confirmar_outro,
-    handle_evento,
-    handle_change_config,
-    handle_see_config
+    handle_evento
 )
-from services.gpt_service import handle_gpt4, salvar_mensagem, cadastrar_evento_geral
+from services.gpt_service import handle_gpt4, salvar_mensagem, cadastrar_evento_geral, handle_change_config, handle_see_config
 from services.message_service import send_message
 from services.elevenlabs_service import handle_eleven_labs
 
@@ -112,7 +110,10 @@ async def receive_message(request: Request):
         elif command == "!gpt":  
             return handle_gpt4(argument, chat, sender)
         elif command == "!config":  
-            return handle_change_config(argument, id='1')
+            if sender not in ALLOWED_ADMIN:
+                send_message(chat, "🚫 Você não tem permissão para executar esse comando! 🚫")
+            else:    
+                return handle_change_config(argument, chat)
         elif command == "!verconfig":  
             return handle_see_config(chat)
         elif command == "!lab":  
