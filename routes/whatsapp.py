@@ -120,11 +120,10 @@ async def receive_message(request: Request):
         elif command == "!lab":  
             return handle_eleven_labs(argument, chat)
         else:
-            
             print("Comando não reconhecido")
             
     # Responde aleatóriamente as mensagens
-    elif random.random() <= 0.3:
+    elif random.random() <= 0.1:
         return handle_gpt4(body_message, chat, sender)
     
     else:
