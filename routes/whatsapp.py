@@ -21,6 +21,7 @@ from services.elevenlabs_service import handle_eleven_labs
 
 router = APIRouter()
 
+
 @router.post("/api/whatsapp/message")
 async def receive_message(request: Request):
     body = await request.json()
@@ -121,9 +122,11 @@ async def receive_message(request: Request):
         else:
             
             print("Comando não reconhecido")
-            # Responde aleatóriamente as mensagens
-            if random.random() <= 0.3:
-                return handle_gpt4(body_message, chat, sender)
+            
+    # Responde aleatóriamente as mensagens
+    elif random.random() <= 0.3:
+        return handle_gpt4(body_message, chat, sender)
+    
     else:
         print("Mensagem não contém um comando válido.")
         # return send_message(chat, "Mensagem recebida, mas não contém um comando válido.")
