@@ -108,7 +108,7 @@ async def receive_message(request: Request):
             return handle_confirmar_outro(sender, argument, chat, ALLOWED_ADMIN)
         elif command == "!evento":  
             return handle_evento(argument, chat)
-        elif command == "!gpt":  
+        elif command == "!xat":  
             return handle_gpt4(argument, chat, sender)
         elif command == "!config":  
             if sender not in ALLOWED_ADMIN:
@@ -124,8 +124,7 @@ async def receive_message(request: Request):
             print("Comando não reconhecido")
             
     # Responde aleatóriamente as mensagens
-    # elif random.random() <= 0.3:
-    elif 1 == 1:
+    elif random.random() <= 0.3:
         return handle_gpt4(body_message, chat, sender)
     
     else:
