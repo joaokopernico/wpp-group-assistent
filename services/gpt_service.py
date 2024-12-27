@@ -290,7 +290,7 @@ def handle_see_config(chat: str):
 
     try:
         # Verificar se já existe algum registro na tabela config_gpt
-        cursor.execute('SELECT * FROM config_gpt WHERE id = 1')
+        cursor.execute('SELECT * FROM config_gpt WHERE chat = ?', (chat,))
         result = cursor.fetchone()
 
         if result is None:
