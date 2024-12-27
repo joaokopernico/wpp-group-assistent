@@ -124,7 +124,8 @@ async def receive_message(request: Request):
             print("Comando não reconhecido")
             
     # Responde aleatóriamente as mensagens
-    elif random.random() <= 0.3:
+    # elif random.random() <= 0.3:
+    elif 1 == 1:
         return handle_gpt4(body_message, chat, sender)
     
     else:
