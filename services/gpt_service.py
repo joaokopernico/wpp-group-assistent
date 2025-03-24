@@ -165,75 +165,99 @@ def handle_gpt4(prompt: str, chat: str, sender: str):
     historico_mensagens.append({"role": "user", "content": f"{sender}: {prompt}"})
 
     try:
+        # Determine if the query might need web search
+        needs_web_search = any(keyword in prompt.lower() for keyword in [
+            "atual", "recente", "notícia", "quando", "último", "hoje", "ontem", 
+            "essa semana", "esse ano", "agora", "previsão", "resultado", 
+            "quanto custa", "o que aconteceu", "preço", "quem ganhou", 
+            "quem é o atual", "novidade"
+        ])
         
-        # Fazer a requisição para a API da OpenAI com Function Calling
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt}
-        ] + historico_mensagens + [
-            {"role": "user", "content": f"chat: {chat},sender: {sender}: {prompt}"}
-        ],
-            functions=tools,
-            function_call="auto",  # Permite que o GPT escolha qual função chamar
-            max_tokens=500,
-            temperature=0.7
-        )
-
-        message = response['choices'][0]['message']
-        print(message)
-
-        if "function_call" in message:
-            function_name = message['function_call']['name']
-            function_args = json.loads(message['function_call']['arguments'])
+        if needs_web_search:
+            # Use search-enabled model for queries that might benefit from web search
+            print("Using web search for query")
+            response = openai.ChatCompletion.create(
+                model="gpt-4o-search-preview",
+                messages=[
+                    {"role": "system", "content": system_prompt}
+                ] + historico_mensagens + [
+                    {"role": "user", "content": f"chat: {chat}, sender: {sender}: {prompt}"}
+                ],
+                web_search_options={},  # Enable web search
+                max_tokens=500,
+                temperature=0.7
+            )
             
-            if function_name == "gpt_register_event":
-                # Chamar a função gpt_register_event com os argumentos fornecidos
-                result = gpt_register_event(
-                    nome_evento=function_args.get("nome_evento"),
-                    data_evento=function_args.get("data_evento"),
-                    hora_evento=function_args.get("hora_evento"),
-                    local=function_args.get("local"),
-                    descricao=function_args.get("descricao"),
-                    chat=function_args.get("chat"),
-                    sender=function_args.get("sender")
-                )
-                return result  # A função gpt_register_event deve retornar uma mensagem de confirmação
-                
-            elif function_name == "send_message":
-                
-                
-                # Chamar a função send_custom_message com os argumentos fornecidos
-                phone = function_args.get("phone")
-                text = function_args.get("text")
-                
-                if sender not in config.ALLOWED_ADMIN:
-                    if phone not in config.ALLOWED_SEND_MESSAGE:
-                        return send_message(chat, 'Você não pode enviar mensagem para essa pessoa 🚫📵')
-                    
-                
-                
-                result = send_message(phone, text)
-                return result  # A função send_custom_message deve retornar uma mensagem de confirmação
-            
-            elif function_name == "send_audio":
-                
-                # Chamar a função send_custom_message com os argumentos fornecidos
-                audio = function_args.get("audio")
-                    
-                return eleven.handle_eleven_labs(audio, chat)
-                
-            else:
-                print(f"Função não reconhecida: {function_name}")
-                return send_message(chat, "Desculpe, não reconheço essa função.")
-        
-        else:
-            # Se o GPT não chamou nenhuma função, simplesmente responda com a mensagem
+            # Get response from search-enabled model
+            message = response['choices'][0]['message']
             reply = message.get('content', '').strip()
+            
             if reply:
                 salvar_mensagem(reply, chat, sender='GPT', date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 send_message(chat, reply)
             return reply
+            
+        else:
+            # Standard function-enabled GPT for normal queries
+            response = openai.ChatCompletion.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": system_prompt}
+                ] + historico_mensagens + [
+                    {"role": "user", "content": f"chat: {chat}, sender: {sender}: {prompt}"}
+                ],
+                functions=tools,
+                function_call="auto",
+                max_tokens=500,
+                temperature=0.7
+            )
+
+            message = response['choices'][0]['message']
+            print(message)
+
+            if "function_call" in message:
+                function_name = message['function_call']['name']
+                function_args = json.loads(message['function_call']['arguments'])
+                
+                if function_name == "gpt_register_event":
+                    # Chamar a função gpt_register_event com os argumentos fornecidos
+                    result = gpt_register_event(
+                        nome_evento=function_args.get("nome_evento"),
+                        data_evento=function_args.get("data_evento"),
+                        hora_evento=function_args.get("hora_evento"),
+                        local=function_args.get("local"),
+                        descricao=function_args.get("descricao"),
+                        chat=function_args.get("chat"),
+                        sender=function_args.get("sender")
+                    )
+                    return result
+                    
+                elif function_name == "send_message":
+                    phone = function_args.get("phone")
+                    text = function_args.get("text")
+                    
+                    if sender not in config.ALLOWED_ADMIN:
+                        if phone not in config.ALLOWED_SEND_MESSAGE:
+                            return send_message(chat, 'Você não pode enviar mensagem para essa pessoa 🚫📵')
+                    
+                    result = send_message(phone, text)
+                    return result
+                
+                elif function_name == "send_audio":
+                    audio = function_args.get("audio")
+                    return eleven.handle_eleven_labs(audio, chat)
+                    
+                else:
+                    print(f"Função não reconhecida: {function_name}")
+                    return send_message(chat, "Desculpe, não reconheço essa função.")
+            
+            else:
+                # Se o GPT não chamou nenhuma função, simplesmente responda com a mensagem
+                reply = message.get('content', '').strip()
+                if reply:
+                    salvar_mensagem(reply, chat, sender='GPT', date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    send_message(chat, reply)
+                return reply
     
     except openai.error.OpenAIError as e:
         print(f"Erro com a API da OpenAI: {e}")
