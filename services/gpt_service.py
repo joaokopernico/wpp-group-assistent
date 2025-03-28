@@ -2,7 +2,7 @@
 import json
 from datetime import datetime
 from database import get_db_connection
-from services.message_service import send_message
+from services.message_service import send_message, send_massive_message
 from services.event_service import cadastrar_evento_geral
 import openai
 from config import OPENAI_API_KEY
@@ -16,6 +16,8 @@ def gpt_register_event(nome_evento: str, data_evento: str, hora_evento: str, loc
 def gpt_send_message(phone: str, text: str):
 
     return send_message(phone, text)
+
+
 
 def obter_historico_mensagens(chat, limite=60):
     conn = get_db_connection()
@@ -130,6 +132,26 @@ def handle_gpt4(prompt: str, chat: str, sender: str):
                 "required": ["phone", "text"],
                 "additionalProperties": False
             }
+        },
+        {
+            "type": "function",
+            "name": "send_massive_message",
+            "description": "Envia uma mensagem para varios numeros de telefones",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "phones": {
+                        "type": "string",
+                        "description": "Array com numeros de telefones especificos"
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "Conteúdo da mensagem."
+                    }
+                },
+                "required": ["phone", "text"],
+                "additionalProperties": False
+            }
         }
     ]
     
@@ -192,9 +214,7 @@ def handle_gpt4(prompt: str, chat: str, sender: str):
                 
                 if sender not in config.ALLOWED_ADMIN:
                     if phone not in config.ALLOWED_SEND_MESSAGE:
-                        return send_message(chat, 'Você não pode enviar mensagem para essa pessoa 🚫📵')
-                    
-                
+                        return send_message(chat, 'Você não pode enviar mensagem para essa pessoa 🚫📵')                                  
                 
                 result = send_message(phone, text)
                 return result  # A função send_custom_message deve retornar uma mensagem de confirmação

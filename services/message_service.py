@@ -2,6 +2,7 @@
 import requests
 from config import *
 import json
+import time
 
 def send_message(phone: str, text: str):
     url = "http://localhost:8900/api/1/chat/send/text"  # Substitua pela URL real do serviço
@@ -21,6 +22,32 @@ def send_message(phone: str, text: str):
     print(text)
     response = requests.post(url, json=payload, headers=headers)
     print(response)
+
+
+def send_massive_message(phones, text: str):
+
+
+    
+    url = "http://localhost:8900/api/1/chat/send/text"  # Substitua pela URL real do serviço
+
+    for phone in phones:
+        if len(phone) > 13:
+            phone = phone + "@g.us"
+        payload = {
+            "phone": phone,
+            "text": text
+        }
+
+        print(payload)
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        print(text)
+        response = requests.post(url, json=payload, headers=headers)
+        print(response)
+
+        time.sleep(1000)
 
 def send_audio_message(phone: str, text: str):
     url = "http://localhost:8900/api/1/chat/send/audio" 
