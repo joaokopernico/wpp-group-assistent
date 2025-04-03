@@ -13,15 +13,14 @@ from services.event_service import (
     handle_confirmar,
     handle_desconfirmar,
     handle_confirmar_outro,
-    handle_evento,
-    handle_change_config,
-    handle_see_config
+    handle_evento
 )
-from services.gpt_service import handle_gpt4, salvar_mensagem, cadastrar_evento_geral
+from services.gpt_service import handle_gpt4, salvar_mensagem, cadastrar_evento_geral, handle_change_config, handle_see_config
 from services.message_service import send_message
 from services.elevenlabs_service import handle_eleven_labs
 
 router = APIRouter()
+
 
 @router.post("/api/whatsapp/message")
 async def receive_message(request: Request):
@@ -109,20 +108,24 @@ async def receive_message(request: Request):
             return handle_confirmar_outro(sender, argument, chat, ALLOWED_ADMIN)
         elif command == "!evento":  
             return handle_evento(argument, chat)
-        elif command == "!gpt":  
+        elif command == "!xat":  
             return handle_gpt4(argument, chat, sender)
         elif command == "!config":  
-            return handle_change_config(argument, id='1')
+            if sender not in ALLOWED_ADMIN:
+                send_message(chat, "🚫 Você não tem permissão para executar esse comando! 🚫")
+            else:    
+                return handle_change_config(argument, chat)
         elif command == "!verconfig":  
             return handle_see_config(chat)
         elif command == "!lab":  
             return handle_eleven_labs(argument, chat)
         else:
-            
             print("Comando não reconhecido")
-            # Responde aleatóriamente as mensagens
-            if random.random() <= 0.3:
-                return handle_gpt4(body_message, chat, sender)
+            
+    # Responde aleatóriamente as mensagens
+    elif random.random() <= 0.01:
+        return handle_gpt4(body_message, chat, sender)
+    
     else:
         print("Mensagem não contém um comando válido.")
         # return send_message(chat, "Mensagem recebida, mas não contém um comando válido.")
